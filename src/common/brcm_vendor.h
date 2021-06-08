@@ -161,5 +161,11 @@ enum brcm_wlan_vendor_attr {
 	BRCM_ATTR_DRIVER_AFTER_LAST     = 6,
 	BRCM_ATTR_DRIVER_MAX            = BRCM_ATTR_DRIVER_AFTER_LAST - 1,
 };
+
+enum wifi_sae_key_attr {
+	BRCM_SAE_KEY_ATTR_BSSID,
+	BRCM_SAE_KEY_ATTR_PMK,
+	BRCM_SAE_KEY_ATTR_PMKID
+};
 #endif /* BRCM_VENDOR_H */
 
