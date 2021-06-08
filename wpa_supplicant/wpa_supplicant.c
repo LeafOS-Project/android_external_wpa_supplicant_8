@@ -4364,7 +4364,10 @@ static void wpas_start_assoc_cb(struct wpa_radio_work *work, int deinit)
 			params.psk = psk;
 	}
 
-	if ((wpa_s->drv_flags2 & WPA_DRIVER_FLAGS2_SAE_OFFLOAD_STA) &&
+	if (
+#ifndef CONFIG_BRCM_SAE
+	(wpa_s->drv_flags2 & WPA_DRIVER_FLAGS2_SAE_OFFLOAD_STA) &&
+#endif
 	    wpa_key_mgmt_sae(params.key_mgmt_suite)) {
 		params.auth_alg = WPA_AUTH_ALG_SAE;
 		if (ssid->sae_password) {
@@ -4373,6 +4376,11 @@ static void wpas_start_assoc_cb(struct wpa_radio_work *work, int deinit)
 		} else if (ssid->passphrase) {
 			params.passphrase = ssid->passphrase;
 		}
+
+#ifdef CONFIG_BRCM_SAE
+		if (ssid->psk_set)
+			params.psk = ssid->psk;
+#endif
 	}
 
 	params.drop_unencrypted = use_crypt;
