@@ -2086,7 +2086,8 @@ int wpa_supplicant_set_suites(struct wpa_supplicant *wpa_s,
 		wpa_sm_set_param(wpa_s->wpa, WPA_PARAM_DENY_PTK0_REKEY, 0);
 	}
 
-#if defined(CONFIG_DRIVER_NL80211_BRCM) || defined(CONFIG_DRIVER_NL80211_SYNA)
+#if (defined(CONFIG_DRIVER_NL80211_BRCM) && !defined(WIFI_BRCM_OPEN_SOURCE_MULTI_AKM)) ||   \
+	defined(CONFIG_DRIVER_NL80211_SYNA)
 	if ((wpa_s->key_mgmt & WPA_KEY_MGMT_CROSS_AKM_ROAM) &&
 		IS_CROSS_AKM_ROAM_KEY_MGMT(ssid->key_mgmt) &&
 		(wpa_s->group_cipher == WPA_CIPHER_CCMP) &&
@@ -2100,7 +2101,8 @@ int wpa_supplicant_set_suites(struct wpa_supplicant *wpa_s,
 	if (wpa_key_mgmt_cross_akm(wpa_s->key_mgmt) &&
 	    !(wpa_s->drv_flags & WPA_DRIVER_FLAGS_SME))
 		wpas_update_allowed_key_mgmt(wpa_s, ssid);
-#endif /* CONFIG_DRIVER_NL80211_BRCM || CONFIG_DRIVER_NL80211_SYNA */
+#endif /* (CONFIG_DRIVER_NL80211_BRCM && !WIFI_BRCM_OPEN_SOURCE_MULTI_AKM) ||
+	* CONFIG_DRIVER_NL80211_SYNA */
 
 	return 0;
 }
@@ -2555,8 +2557,11 @@ void wpa_supplicant_associate(struct wpa_supplicant *wpa_s,
 		}
 		if (wpa_supplicant_create_ap(wpa_s, ssid) < 0) {
 			wpa_supplicant_set_state(wpa_s, WPA_DISCONNECTED);
-			if (ssid->mode == WPAS_MODE_P2P_GROUP_FORMATION)
+			if (ssid->mode == WPAS_MODE_P2P_GROUP_FORMATION ||
+				ssid->mode == WPAS_MODE_P2P_GO) {
+				wpa_msg(wpa_s, MSG_ERROR, "create ap failed. clean up the states");
 				wpas_p2p_ap_setup_failed(wpa_s);
+			}
 			return;
 		}
 		wpa_s->current_bss = bss;
@@ -4302,15 +4307,23 @@ static void wpas_start_assoc_cb(struct wpa_radio_work *work, int deinit)
 #endif /* CONFIG_WEP */
 
 	if ((wpa_s->drv_flags & WPA_DRIVER_FLAGS_4WAY_HANDSHAKE_PSK) &&
-#if defined(CONFIG_DRIVER_NL80211_BRCM) || defined(CONFIG_DRIVER_NL80211_SYNA)
+#if (defined(CONFIG_DRIVER_NL80211_BRCM) && !defined(WIFI_BRCM_OPEN_SOURCE_MULTI_AKM)) ||   \
+	defined(CONFIG_DRIVER_NL80211_SYNA)
 	     ((params.key_mgmt_suite & WPA_KEY_MGMT_PSK) ||
 	      (params.key_mgmt_suite == WPA_KEY_MGMT_FT_PSK))) {
+#elif (defined(CONFIG_DRIVER_NL80211_BRCM) && defined(WIFI_BRCM_OPEN_SOURCE_MULTI_AKM)) ||   \
+	defined(CONFIG_DRIVER_NL80211_SYNA)
+	    (params.key_mgmt_suite == WPA_KEY_MGMT_PSK ||
+	     params.key_mgmt_suite == WPA_KEY_MGMT_FT_PSK ||
+	      params.key_mgmt_suite == WPA_KEY_MGMT_PSK_SHA256 ||
+	      wpa_key_mgmt_wpa_psk_no_sae(params.allowed_key_mgmts))) {
 #else
 	    (params.key_mgmt_suite == WPA_KEY_MGMT_PSK ||
 	     params.key_mgmt_suite == WPA_KEY_MGMT_FT_PSK ||
 	     (params.allowed_key_mgmts &
 	      (WPA_KEY_MGMT_PSK | WPA_KEY_MGMT_FT_PSK)))) {
-#endif /* CONFIG_DRIVER_NL80211_BRCM || CONFIG_DRIVER_NL80211_SYNA */
+#endif /* (CONFIG_DRIVER_NL80211_BRCM && !WIFI_BRCM_OPEN_SOURCE_MULTI_AKM) ||
+	* CONFIG_DRIVER_NL80211_SYNA */
 		params.passphrase = ssid->passphrase;
 		if (wpa_supplicant_get_psk(wpa_s, bss, ssid, psk) == 0)
 			params.psk = psk;
@@ -4337,14 +4350,16 @@ static void wpas_start_assoc_cb(struct wpa_radio_work *work, int deinit)
 		else
 			params.req_key_mgmt_offload = 1;
 
-#if defined(CONFIG_DRIVER_NL80211_BRCM) || defined(CONFIG_DRIVER_NL80211_SYNA)
+#if (defined(CONFIG_DRIVER_NL80211_BRCM) && !defined(WIFI_BRCM_OPEN_SOURCE_MULTI_AKM)) ||   \
+	defined(CONFIG_DRIVER_NL80211_SYNA)
 		if (((params.key_mgmt_suite & WPA_KEY_MGMT_PSK) ||
 		     params.key_mgmt_suite == WPA_KEY_MGMT_PSK_SHA256 ||
 		     params.key_mgmt_suite == WPA_KEY_MGMT_FT_PSK) &&
 #else
 		if ((wpa_key_mgmt_wpa_psk_no_sae(params.key_mgmt_suite) ||
 		     wpa_key_mgmt_wpa_psk_no_sae(params.allowed_key_mgmts)) &&
-#endif /* CONFIG_DRIVER_NL80211_BRCM || CONFIG_DRIVER_NL80211_SYNA */
+#endif /* (CONFIG_DRIVER_NL80211_BRCM && !WIFI_BRCM_OPEN_SOURCE_MULTI_AKM) ||
+	* CONFIG_DRIVER_NL80211_SYNA */
 		    wpa_supplicant_get_psk(wpa_s, bss, ssid, psk) == 0)
 			params.psk = psk;
 	}

@@ -3348,7 +3348,8 @@ fail:
 }
 #endif /* CONFIG_DRIVER_NL80211_BRCM || CONFIG_DRIVER_NL80211_SYNA */
 
-#if defined(CONFIG_DRIVER_NL80211_BRCM) || defined(CONFIG_DRIVER_NL80211_SYNA)
+#if (defined(CONFIG_DRIVER_NL80211_BRCM) && !defined(WIFI_BRCM_OPEN_SOURCE_MULTI_AKM)) ||   \
+	defined(CONFIG_DRIVER_NL80211_SYNA)
 static int wpa_cross_akm_key_mgmt_to_suites(unsigned int key_mgmt_suites, u32 suites[],
                         int max_suites)
 {
@@ -3364,7 +3365,8 @@ static int wpa_cross_akm_key_mgmt_to_suites(unsigned int key_mgmt_suites, u32 su
 
     return num_suites;
 }
-#endif /* CONFIG_DRIVER_NL80211_BRCM || CONFIG_DRIVER_NL80211_SYNA */
+#endif /* (CONFIG_DRIVER_NL80211_BRCM && !WIFI_BRCM_OPEN_SOURCE_MULTI_AKM) ||
+	* CONFIG_DRIVER_NL80211_SYNA */
 
 #ifdef CONFIG_DRIVER_NL80211_QCA
 static int issue_key_mgmt_set_key(struct wpa_driver_nl80211_data *drv,
@@ -7077,7 +7079,8 @@ static int nl80211_connect_common(struct wpa_driver_nl80211_data *drv,
 		os_free(mgmt);
 	}
 
-#if defined(CONFIG_DRIVER_NL80211_BRCM) || defined(CONFIG_DRIVER_NL80211_SYNA)
+#if (defined(CONFIG_DRIVER_NL80211_BRCM) && !defined(WIFI_BRCM_OPEN_SOURCE_MULTI_AKM)) ||   \
+	defined(CONFIG_DRIVER_NL80211_SYNA)
 	if (IS_CROSS_AKM_ROAM_KEY_MGMT(params->key_mgmt_suite)) {
 		int num_suites;
 		u32 suites[NL80211_MAX_NR_AKM_SUITES];
@@ -7092,7 +7095,8 @@ static int nl80211_connect_common(struct wpa_driver_nl80211_data *drv,
 			return -1;
 		}
 	}
-#endif /* CONFIG_DRIVER_NL80211_BRCM || CONFIG_DRIVER_NL80211_SYNA */
+#endif /* (CONFIG_DRIVER_NL80211_BRCM && !WIFI_BRCM_OPEN_SOURCE_MULTI_AKM) ||
+	* CONFIG_DRIVER_NL80211_SYNA */
 	if (params->req_handshake_offload &&
 	    (drv->capa.flags & WPA_DRIVER_FLAGS_4WAY_HANDSHAKE_8021X)) {
 		    wpa_printf(MSG_DEBUG, "  * WANT_1X_4WAY_HS");

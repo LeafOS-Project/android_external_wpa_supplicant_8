@@ -3558,7 +3558,8 @@ no_pfs:
 	if (((wpa_s->key_mgmt == WPA_KEY_MGMT_FT_PSK) ||
 		(wpa_s->key_mgmt == WPA_KEY_MGMT_FT_IEEE8021X) ||
 		(wpa_s->key_mgmt == WPA_KEY_MGMT_FT_SAE) ||
-		(wpa_s->key_mgmt == WPA_KEY_MGMT_FT_IEEE8021X_SHA384)) &&
+		(wpa_s->key_mgmt == WPA_KEY_MGMT_FT_IEEE8021X_SHA384) ||
+		(wpa_s->key_mgmt == WPA_KEY_MGMT_FT_SAE_EXT_KEY)) &&
 		wpa_ft_is_completed(wpa_s->wpa)) {
 		return 0;
 	}
